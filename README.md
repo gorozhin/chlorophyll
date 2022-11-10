@@ -2,7 +2,7 @@
 
 ## Installation
 ### Quicklisp
-Comming soon.
+Coming soon.
 
 ### Ultralisp
 Set up [Ultralisp](https://ultralisp.org/), load `chlorophyll`:
