@@ -12,7 +12,8 @@
 		:components
 		((:file "package")
                  (:file "color")
-                 (:file "style"))))
+                 (:file "style")
+                 (:file "positioning"))))
   :description "ANSI escape code library for Common Lisp"
   :long-description #.(with-open-file (stream (merge-pathnames
                                                #p"README.md"
