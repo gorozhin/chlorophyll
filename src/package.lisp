@@ -6,7 +6,7 @@
            #:create-rgb-color
            #:create-no-color
            ;; styling functions
-           ;; exports additional symbols inside a macro
+           ;; exports additional symbols inside macro
            #:new-style
            #:stylize
            ;; positioning

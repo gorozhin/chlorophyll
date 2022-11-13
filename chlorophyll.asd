@@ -1,7 +1,7 @@
- (in-package #:cl-user)
+(in-package #:cl-user)
 (defpackage chlorophyll-asd (:use #:cl #:asdf))
 (in-package #:chlorophyll-asd)
-
+
 (defsystem #:chlorophyll
   :version "0.0.1"
   :author "Mikhail Gorozhin <m.gorozhin@gmail.com>"
@@ -27,3 +27,4 @@
                             (setf (fill-pointer seq) (read-sequence seq stream))
                             seq)))
   :in-order-to ((test-op (test-op #:chlorophyll-test))))
+
