@@ -1,0 +1,35 @@
+name: Tests
+on:
+  push:
+    branches:
+  pull_request:
+    branches:
+jobs:
+  test:
+    name: ${{ matrix.lisp }} on ${{ matrix.os }}
+    strategy:
+      matrix:
+        lisp: [sbcl-bin]
+        os: [ ubuntu-latest, macos-latest ]
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: install roswell
+        shell: bash
+        env:
+          LISP: ${{ matrix.lisp }}
+        run: curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
+      - name: run lisp
+        continue-on-error: false
+        shell: bash
+        run: |
+          ros -e '(format t "~a:~a on ~a~%...~%~%" (lisp-implementation-type) (lisp-implementation-version) (machine-type))'
+          ros -e '(format t " fixnum bits:~a~%" (integer-length most-positive-fixnum))'
+          ros -e "(ql:quickload 'trivial-features)" -e '(format t "features = ~s~%" *features*)'
+      - name: load code and run tests
+        shell: bash
+        env:
+          CL_GCRYPT_EXIT_ON_FAIL: true
+        run: |
+          ros scripts/bootstrap-tests.lisp
