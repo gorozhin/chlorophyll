@@ -1,36 +1,36 @@
 (in-package #:chlorophyll)
 
-(declaim (ftype (function (integer integer)
+(declaim (ftype (function (integer integer &key (:stream stream))
                           null)
                 move-cursor))
-(defun move-cursor (row column)
+(defun move-cursor (row column &key (stream *standard-output*))
   "Moves cursor to desired position"
-  (format t "~C[~A;~AH" #\Esc row column))
+  (format stream "~C[~A;~AH" #\Esc row column))
 
-(declaim (ftype (function ()
+(declaim (ftype (function (&key (:stream stream))
                           null)
                 save-cursor-position))
-(defun save-cursor-position ()
+(defun save-cursor-position (&key (stream *standard-output*))
   "Saves current cursor position"
-  (format t "~C[s" #\Esc))
+  (format stream "~C[s" #\Esc))
 
-(declaim (ftype (function ()
+(declaim (ftype (function (&key (:stream stream))
                           null)
                 restore-cursor-position))
-(defun restore-cursor-position ()
+(defun restore-cursor-position (&key (stream *standard-output*))
   "Restores the cursor position"
-  (format t "~C[u" #\Esc))
+  (format stream "~C[u" #\Esc))
 
 (macrolet ((define-cursor-positioning-functions (&body definitions)
              `(progn ,@(loop for (function-name control-sequence documentation)
                                on definitions
                              by #'cdddr
                              collect `(progn
-                                        (declaim (ftype (function (&optional integer)
+                                        (declaim (ftype (function (&key (:n integer) (:stream stream))
                                                                   null)
                                                         ,function-name))
-                                        (defun ,function-name (&optional (n 1))
-                                          (format t "~C[~A~A" #\Esc n ,control-sequence))
+                                        (defun ,function-name (&key (n 1) (stream *standard-output*))
+                                          (format stream "~C[~A~A" #\Esc n ,control-sequence))
                                         (setf (documentation ',function-name 'function)
                                               ,documentation)
                                         (export ',function-name '#:chlorophyll))))))
