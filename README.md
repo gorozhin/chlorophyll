@@ -16,7 +16,7 @@ Set up [Ultralisp](https://ultralisp.org/), load `chlorophyll`:
 ```common-lisp
 (let ((very-peri (chlorophyll:create-rgb-color 102 103 171))
       (hot-pink (chlorophyll:create-rgb-color 255 105 180)))
-  (format t "~A~%~A~%" (chlorophyll:overline "overline text")
+  (format t "~A~%~A~%" (chlorophyll:bold "overline text")
           (chlorophyll:stylize
            (chlorophyll:new-style
             :bold t
