@@ -6,12 +6,13 @@
   :version "0.0.1"
   :author "Mikhail Gorozhin <m.gorozhin@gmail.com>"
   :license "Expat"
-  :depends-on (
-	       #:alexandria)
+  :depends-on (#:alexandria #:uiop)
   :components ((:module "src"
 		:components
 		((:file "package")
+                 (:file "profile")
                  (:file "color")
+                 (:file "color-converter")
                  (:file "style")
                  (:file "positioning"))))
   :description "ANSI escape code library for Common Lisp"

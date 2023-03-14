@@ -6,7 +6,10 @@
 (defun run-tests ()
   (let ((suites
 	  (list (intern* 'style-suite '#:chlorophyll-test)
-                (intern* 'positioning-suite '#:chlorophyll-test))))
+                (intern* 'positioning-suite '#:chlorophyll-test)
+                (intern* 'profile-suite '#:chlorophyll-test)
+                (intern* 'color-converter-suite
+                         '#:chlorophyll-test))))
     (when (not (reduce
 		#'(lambda (x y) (and x y))
 		(loop for suite in suites
@@ -27,7 +30,9 @@
 		:components
 		((:file "package")
                  (:file "style")
-                 (:file "positioning"))))
+                 (:file "positioning")
+                 (:file "profile")
+                 (:file "color-converter"))))
   :perform (test-op (o c)
 		    (run-tests)))
 

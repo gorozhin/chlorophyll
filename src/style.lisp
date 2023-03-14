@@ -1,5 +1,29 @@
 (in-package #:chlorophyll)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defclass color-mode () ()
+    (:documentation "defines mode in which color is used, not to be used directly"))
+  (defclass foreground-mode (color-mode) ()
+    (:documentation "defines foreground color mode"))
+  (defclass background-mode (color-mode) ()
+    (:documentation "defines background color mode"))
+  (defmethod equal-mode ((x foreground-mode) (y t))
+    nil)
+  (defmethod equal-mode ((x t) (y foreground-mode))
+    nil)
+  (defmethod equal-mode ((x foreground-mode) (y foreground-mode))
+    t)
+  (defmethod equal-mode ((x background-mode) (y t))
+    nil)
+  (defmethod equal-mode ((x t) (y background-mode))
+    nil)
+  (defmethod equal-mode ((x background-mode) (y background-mode))
+    t)
+  (define-constant +foreground-mode+ (make-instance 'foreground-mode)
+    :test #'equal-mode)
+  (define-constant +background-mode+ (make-instance 'background-mode)
+    :test #'equal-mode))
+
 (defclass style ()
   ((bold :type boolean
          :reader boldp
@@ -52,6 +76,25 @@
                :documentation "Defines a background color for the text"))
   (:documentation "Represents a styleset appliable for the text"))
 
+;; ansi
+(declaim (type (integer) +foreground-ansi-addup+))
+(define-constant +foreground-ansi-addup+ 30
+  :test #'=
+  :documentation "addup constant for a background color")
+(declaim (type (integer) +background-ansi-addup+))
+(define-constant +background-ansi-addup+ 40
+  :test #'=
+  :documentation "addup constant for a foreground color")
+;; extended ansi
+(declaim (type (integer) +foreground-extended-ansi-addup+))
+(define-constant +foreground-extended-ansi-addup+ 82
+  :test #'=
+  :documentation "addup constant for a background color")
+(declaim (type (integer) +background-extended-ansi-addup+))
+(define-constant +background-extended-ansi-addup+ 92
+  :test #'=
+  :documentation "addup constant for a foreground color")
+;; ansi-256 and truecolor
 (declaim (type (integer) +foreground+))
 (define-constant +foreground+ 38
   :test #'=
@@ -134,15 +177,18 @@
                  :foreground foreground
                  :background background))
 
-(defmethod stylize ((s style) (str string))
+(defmethod stylize ((s style) (str string) &key (profile nil))
   "Applies STYLE to STR returning a new string"
-  (let ((compiled-styles nil))
+  (let* ((compiled-styles nil)
+         (profile (or profile (new-profile-from-env-momoised)))
+         (terminal (terminal profile)))
     (macrolet
         ((define-predicate-styles (&body definitions)
            `(progn ,@(loop for (predicate value)
                              on definitions
                            by #'cddr
-                           collect `(when (,predicate s)
+                           collect `(when (and (supports-effects-p terminal)
+                                               (,predicate s))
                                       (setf compiled-styles
                                             (nconc compiled-styles
                                                    (list ,value)))))))
@@ -152,11 +198,12 @@
                            by #'cddr
                            collect
                            `(when (not (null ,color))
-                              (setf compiled-styles
+                              (let ((sequence (to-sequence (adapt ,color terminal)
+                                                              ,value)))
+                                (when (not (string= sequence ""))
+                                  (setf compiled-styles
                                     (nconc compiled-styles
-                                           (list (format nil "~A;~A"
-                                                         ,value
-                                                         (to-sequence ,color))))))))))
+                                           (list sequence))))))))))
       (define-predicate-styles boldp +bold+
         faintp +faint+
         italicp +italic+
@@ -165,8 +212,10 @@
         invertp +invert+
         crossoutp +crossout+
         overlinep +overline+)
-      (define-color-styles (get-foreground s) +foreground+
-        (get-background s) +background+))
+      (define-color-styles
+        (get-foreground s) +foreground-mode+
+        (get-background s) +background-mode+))
+
     (if (> (length compiled-styles) 0)
         (format nil "~C[~{~A~^;~}m~A~A[~Am"
                 #\Esc
@@ -176,20 +225,40 @@
                 +reset+)
         str)))
 
-(defmethod to-sequence ((color no-color))
+(defmethod to-sequence ((color no-color) (mode color-mode))
   "Converts NO-COLOR to a ANSI escape sequence color definition"
   "")
 
-(defmethod to-sequence ((color ansi-256-color))
-  "Converts ANSI-256-COLOR to a ANSI escape sequence color definition"
-  (format nil "5;~A" (color-id color)))
+(macrolet ((define-to-sequence (mode extended-addup addup)
+             `(defmethod to-sequence ((color ansi-color) (mode ,mode))
+                "Converts ANSI-COLOR to an escape sequence color definition"
+                (format nil "~A" (+ (color-id color)
+                                    (if (extended-ansi-p color)
+                                        ,extended-addup
+                                        ,addup))))))
+  (define-to-sequence foreground-mode
+    +foreground-extended-ansi-addup+
+    +foreground-ansi-addup+)
+  (define-to-sequence background-mode
+    +background-extended-ansi-addup+
+    +background-ansi-addup+))
 
-(defmethod to-sequence ((color rgb-color))
-  "Converts RGB-COLOR to a ANSI escape sequence color definition"
-  (format nil "2;~A;~A;~A"
-          (red color)
-          (green color)
-          (blue color)))
+(macrolet ((define-to-sequence (color-type mode code)
+             `(defmethod to-sequence ((color ,color-type) (mode ,mode))
+                ,(format nil "Converts ~A to an escape sequence color definition" (symbol-name color-type))
+                (format nil "~A;~A" ,code (color-seq color)))))
+
+  (flet ((color-seq (color)
+           (format nil "2;~A;~A;~A"
+                   (red color)
+                   (green color)
+                   (blue color))))
+    (define-to-sequence rgb-color background-mode +background+)
+    (define-to-sequence rgb-color foreground-mode +foreground+))
+
+  (flet ((color-seq (color) (format nil "5;~A" (color-id color))))
+    (define-to-sequence ansi-256-color background-mode +background+)
+    (define-to-sequence ansi-256-color foreground-mode +foreground+)))
 
 (macrolet ((define-eloquent-boolean-constructors (&rest definitions)
              `(progn ,@(loop for definition
@@ -201,15 +270,15 @@
                                     (interned-keyword-symbol (intern symbol-name
                                                                      '#:keyword)))
                                `(progn
-                                  (declaim (ftype (function (string)
+                                  (declaim (ftype (function (string &key (:profile profile))
                                                             (values string &optional))
                                                   ,interned-package-symbol))
                                   (defun ,interned-package-symbol
-                                      (str)
+                                      (str &key (profile *default-profile*))
                                     (let ((style
                                             (new-style ,interned-keyword-symbol
                                                        t)))
-                                      (stylize style str)))
+                                      (stylize style str :profile profile)))
                                   (setf (documentation ',interned-package-symbol 'function)
                                         (format nil
                                                 "Eloquent constructor setting ~A"
@@ -225,15 +294,15 @@
                                     (interned-keyword-symbol (intern symbol-name
                                                                      '#:keyword)))
                                `(progn
-                                  (declaim (ftype (function (color string)
+                                  (declaim (ftype (function (color string &key (:profile profile))
                                                             (values string &optional))
                                                   ,interned-package-symbol))
                                   (defun ,interned-package-symbol
-                                      (color str)
+                                      (color str &key (profile *default-profile*))
                                     (let ((style
                                             (new-style ,interned-keyword-symbol
                                                        color)))
-                                      (stylize style str)))
+                                      (stylize style str :profile profile)))
                                   (setf (documentation ',interned-package-symbol 'function)
                                         (format nil
                                                 "Eloquent constructor setting ~A"
