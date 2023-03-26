@@ -16,6 +16,7 @@
            #:save-cursor-position
            #:restore-cursor-position
            ;; profile
+           #:*profile*
            #:new-profile-from-env
            #:new-terminal
            #:create-profile

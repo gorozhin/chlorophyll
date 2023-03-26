@@ -7,11 +7,23 @@
              :documentation "Terminal features"))
   (:documentation "Chlorophyll profile"))
 
+(defclass dynamic-profile (profile) ())
+
+(declaim (ftype (function ()
+                          (values profile &optional))
+                new-ascii-terminal))
+(defun new-dynamic-profile ()
+  (make-instance 'dynamic-profile))
+
 (declaim (ftype (function (terminal)
                           (values profile &optional))
                 create-new-profile))
 (defun create-profile (terminal)
   (make-instance 'profile :terminal terminal))
+
+(defmethod terminal ((profile dynamic-profile))
+  (let ((profile (new-profile-from-env-momoised)))
+    (terminal profile)))
 
 (defclass terminal () ()
   (:documentation "Base class representing terminal type, not to be used directly"))
@@ -132,4 +144,6 @@
     (when (null profile)
       (setf profile (new-profile-from-env)))
     profile))
+
+(defparameter *profile* (new-dynamic-profile))
 

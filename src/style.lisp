@@ -177,10 +177,9 @@
                  :foreground foreground
                  :background background))
 
-(defmethod stylize ((s style) (str string) &key (profile nil))
+(defmethod stylize ((s style) (str string) &key (profile *profile*))
   "Applies STYLE to STR returning a new string"
   (let* ((compiled-styles nil)
-         (profile (or profile (new-profile-from-env-momoised)))
          (terminal (terminal profile)))
     (macrolet
         ((define-predicate-styles (&body definitions)
@@ -274,7 +273,7 @@
                                                             (values string &optional))
                                                   ,interned-package-symbol))
                                   (defun ,interned-package-symbol
-                                      (str &key (profile *default-profile*))
+                                      (str &key (profile *profile*))
                                     (let ((style
                                             (new-style ,interned-keyword-symbol
                                                        t)))
@@ -298,7 +297,7 @@
                                                             (values string &optional))
                                                   ,interned-package-symbol))
                                   (defun ,interned-package-symbol
-                                      (color str &key (profile *default-profile*))
+                                      (color str &key (profile *profile*))
                                     (let ((style
                                             (new-style ,interned-keyword-symbol
                                                        color)))
