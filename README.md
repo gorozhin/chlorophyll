@@ -2,10 +2,14 @@
 
 ## Installation
 ### Quicklisp
-Coming soon.
+Set up [Quicklisp](https://www.quicklisp.org/beta/), load `chlorophyll`:
+
+```common-lisp
+(ql:quickload "chlorophyll")
+```
 
 ### Ultralisp
-Set up [Ultralisp](https://ultralisp.org/), load `chlorophyll`:
+Set up [Quicklisp](https://www.quicklisp.org/beta/) and [Ultralisp](https://ultralisp.org/), load `chlorophyll`:
 
 ```common-lisp
 (ql:quickload "chlorophyll")
