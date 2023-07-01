@@ -22,7 +22,10 @@
   (define-constant +foreground-mode+ (make-instance 'foreground-mode)
     :test #'equal-mode)
   (define-constant +background-mode+ (make-instance 'background-mode)
-    :test #'equal-mode))
+    :test #'equal-mode)
+  (defmethod make-load-form ((m color-mode) &optional env)
+    (declare (ignore env))
+    (make-load-form-saving-slots m)))
 
 (defclass style ()
   ((bold :type boolean
