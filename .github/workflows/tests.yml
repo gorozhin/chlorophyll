@@ -9,7 +9,7 @@ jobs:
     name: ${{ matrix.lisp }} on ${{ matrix.os }}
     strategy:
       matrix:
-        lisp: [sbcl-bin]
+        lisp: [sbcl-bin, ccl]
         os: [ ubuntu-latest, macos-latest ]
 
     runs-on: ${{ matrix.os }}
